@@ -1,34 +1,35 @@
 #!/usr/bin/python3
-"""
-Fetches TODO list progress of an employee using a REST API.
-"""
 import requests
 import sys
 
-if __name__ == "__main__":
-    # Check if an argument is provided
-    if len(sys.argv) != 2:
-        sys.exit()
+def gather_data(user_id):
+    # Fetch user details
+    user_url = f"https://jsonplaceholder.typicode.com/users/{user_id}"
+    user_response = requests.get(user_url)
+    user = user_response.json()
 
-    user_id = sys.argv[1]
+    # Fetch todos for the user
+    todo_url = f"https://jsonplaceholder.typicode.com/todos?userId={user_id}"
+    todo_response = requests.get(todo_url)
+    todos = todo_response.json()
 
-    # Define the API URLs (use .format() instead of f-strings)
-    user_url = "https://jsonplaceholder.typicode.com/users/{}".format(user_id)
-    todos_url = "https://jsonplaceholder.typicode.com/todos?userId={}".format(user_id)
+    # Get completed tasks
+    completed_tasks = [task['title'] for task in todos if task['completed']]
 
-    # Fetch data from API
-    user = requests.get(user_url).json()
-    todos = requests.get(todos_url).json()
+    # Display the progress
+    print(f"Employee {user['name']} is done with tasks"
+          f"({len(completed_tasks)}/{len(todos)}):")
 
-    # Extract employee name
-    employee_name = user.get("name")
-
-    # Filter completed tasks
-    completed_tasks = [task["title"] for task in todos if task.get("completed")]
-    total_tasks = len(todos)
-    done_tasks = len(completed_tasks)
-
-    # Print output
-    print("Employee {} is done with tasks({}/{}):".format(employee_name, done_tasks, total_tasks))
     for task in completed_tasks:
-        print("\t {}".format(task))
+        print(f"\t {task}")
+
+if __name__ == "__main__":
+    # Check if user provided an argument (employee ID)
+    if len(sys.argv) != 2:
+        print("Usage: ./0-gather_data_from_an_API.py <employee_id>")
+    else:
+        try:
+            employee_id = int(sys.argv[1])
+            gather_data(employee_id)
+        except ValueError:
+            print("Please provide a valid integer for employee ID.")
